@@ -2,11 +2,31 @@ import RPi.GPIO as GPIO
 import time
 import sys
 import json
+import argparse
+from argparse import ArgumentParser
+import os
+
 
 steps_all_the_way=8000
-stateFileName="blindState.json"
+stateFilePath="blindState.json"
 
 def main():
+    global stateFilePath
+    parser=ArgumentParser()
+    parser.add_argument("-p",type=dir_path,help="Path to the state file.")
+    args=parser.parse_args()
+    
+    if os.path.exists(stateFilePath):
+        move_blinds()
+    else:
+        new_path=os.path.join(args.p,stateFilePath)
+        stateFilePath=new_path
+        if(os.path.exists(stateFilePath)):
+            move_blinds()
+
+
+
+def move_blinds():
     state=checkState()
     if(state=="down"):
         blinds_up()
@@ -15,9 +35,16 @@ def main():
         blinds_down()
         switchBlindState()
 
+
+def dir_path(path):
+    if os.path.isdir(path):
+        return path
+    else:
+        raise argparse.ArgumentTypeError(f"readable dir: {path} is not a valid path")   
+
 def switchBlindState():
     data=""
-    with open(stateFileName, "r") as f:
+    with open(stateFilePath, "r") as f:
         data=json.load(f)
 
     print(data["blindState"]["position"])
@@ -28,11 +55,11 @@ def switchBlindState():
         print("Switching state to down")
         data["blindState"]["position"]="down"
     
-    with open(stateFileName,"w") as f:
+    with open(stateFilePath,"w") as f:
         json.dump(data, f)
 
 def checkState():
-    with open("blindState.json") as f:
+    with open(stateFilePath) as f:
         data=json.load(f)
         return data["blindState"]["position"]
 
