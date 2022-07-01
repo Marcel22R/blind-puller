@@ -1,14 +1,40 @@
 import RPi.GPIO as GPIO
 import time
 import sys
+import json
 
-
-steps_all_the_way=7000
+steps_all_the_way=8000
+stateFileName="blindState.json"
 
 def main():
-    blinds_up()
-    blinds_down()
+    state=checkState()
+    if(state=="down"):
+        blinds_up()
+        switchBlindState()
+    else:
+        blinds_down()
+        switchBlindState()
 
+def switchBlindState():
+    data=""
+    with open(stateFileName, "r") as f:
+        data=json.load(f)
+
+    print(data["blindState"]["position"])
+    if(data["blindState"]["position"]=="down"):
+        print("Switching state to up")
+        data["blindState"]["position"]="up"
+    else:
+        print("Switching state to down")
+        data["blindState"]["position"]="down"
+    
+    with open(stateFileName,"w") as f:
+        json.dump(data, f)
+
+def checkState():
+    with open("blindState.json") as f:
+        data=json.load(f)
+        return data["blindState"]["position"]
 
 def blinds_up():
     turn_x_steps(steps_all_the_way)    
